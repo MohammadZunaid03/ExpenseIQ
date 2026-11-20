@@ -1,0 +1,117 @@
+name: ExpenseIQ CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: expenseiq-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect project components
+        id: detect
+        shell: bash
+        run: |
+          if [ -f package.json ]; then
+            echo "root_node=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "root_node=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -f frontend/package.json ]; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -f backend/package.json ]; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -f frontend/package-lock.json ]; then
+            echo "frontend_lock=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend_lock=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -f backend/package-lock.json ]; then
+            echo "backend_lock=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend_lock=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Node.js
+        if: steps.detect.outputs.root_node == 'true' || steps.detect.outputs.frontend == 'true' || steps.detect.outputs.backend == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      - name: Install root dependencies
+        if: steps.detect.outputs.root_node == 'true'
+        run: npm ci
+
+      - name: Check root project
+        if: steps.detect.outputs.root_node == 'true'
+        run: |
+          npm run lint --if-present
+          npm test --if-present
+          npm run build --if-present
+
+      - name: Install frontend dependencies
+        if: steps.detect.outputs.frontend == 'true' && steps.detect.outputs.frontend_lock == 'true'
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install frontend dependencies (no lockfile yet)
+        if: steps.detect.outputs.frontend == 'true' && steps.detect.outputs.frontend_lock != 'true'
+        working-directory: frontend
+        run: npm install --package-lock-only && npm install
+
+      - name: Check frontend
+        if: steps.detect.outputs.frontend == 'true'
+        working-directory: frontend
+        run: |
+          npm run lint --if-present
+          npm test --if-present
+          npm run build --if-present
+
+      - name: Install backend dependencies
+        if: steps.detect.outputs.backend == 'true' && steps.detect.outputs.backend_lock == 'true'
+        working-directory: backend
+        run: npm ci
+
+      - name: Install backend dependencies (no lockfile yet)
+        if: steps.detect.outputs.backend == 'true' && steps.detect.outputs.backend_lock != 'true'
+        working-directory: backend
+        run: npm install --package-lock-only && npm install
+
+      - name: Check backend
+        if: steps.detect.outputs.backend == 'true'
+        working-directory: backend
+        run: |
+          npm run lint --if-present
+          npm test --if-present
+
+      - name: Confirm workflow setup
+        run: echo "ExpenseIQ CI checks completed for the components currently present."
