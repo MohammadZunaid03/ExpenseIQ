@@ -42,6 +42,14 @@ app.get("/api/health/database", async (_request, response) => {
 
 app.use("/api/auth", authRouter);
 
+app.use((error, _request, response, _next) => {
+  console.error("ExpenseIQ API error:", error);
+  response.status(500).json({
+    success: false,
+    message: "An unexpected server error occurred.",
+  });
+});
+
 app.use((request, response) => {
   response.status(404).json({
     success: false,
