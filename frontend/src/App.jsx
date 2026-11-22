@@ -1,0 +1,103 @@
+const summaryCards = [
+  { label: "Total balance", amount: "₹24,560.00", change: "+8.2%", tone: "positive", icon: "↗" },
+  { label: "Monthly income", amount: "₹32,000.00", change: "+4.5%", tone: "positive", icon: "↓" },
+  { label: "Monthly expenses", amount: "₹7,440.00", change: "-2.1%", tone: "positive", icon: "↗" },
+];
+
+const transactions = [
+  { name: "Grocery shopping", category: "Food & groceries", date: "Today, 10:42 AM", amount: "-₹850.00", mark: "G", color: "green" },
+  { name: "Monthly stipend", category: "Income", date: "Yesterday", amount: "+₹8,000.00", mark: "S", color: "blue" },
+  { name: "Metro recharge", category: "Transport", date: "Yesterday", amount: "-₹300.00", mark: "M", color: "orange" },
+];
+
+function App() {
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <a className="brand" href="/" aria-label="ExpenseIQ home">
+          <span className="brand-mark">E</span>
+          <span>Expense<span className="brand-light">IQ</span></span>
+        </a>
+        <p className="nav-caption">WORKSPACE</p>
+        <nav className="navigation" aria-label="Main navigation">
+          <a className="nav-link active" href="#overview"><span>▦</span> Overview</a>
+          <a className="nav-link" href="#transactions"><span>↔</span> Transactions</a>
+          <a className="nav-link" href="#budgets"><span>◷</span> Budgets</a>
+          <a className="nav-link" href="#reports"><span>▥</span> Reports</a>
+          <a className="nav-link" href="#goals"><span>◎</span> Savings goals</a>
+        </nav>
+        <div className="sidebar-bottom">
+          <div className="help-card">
+            <span className="help-icon">✦</span>
+            <strong>Make every rupee count.</strong>
+            <p>Small steps today build stronger financial habits tomorrow.</p>
+          </div>
+          <div className="profile">
+            <div className="avatar">ZU</div>
+            <div><strong>Your account</strong><small>Personal workspace</small></div>
+            <span className="profile-menu">···</span>
+          </div>
+        </div>
+      </aside>
+
+      <main className="main-content" id="overview">
+        <header className="topbar">
+          <div><span className="eyebrow">PERSONAL FINANCE</span><h1>Overview</h1></div>
+          <div className="topbar-actions"><span className="date-label">Your financial snapshot</span><button className="icon-button" aria-label="Notifications">♧</button></div>
+        </header>
+
+        <section className="welcome-row">
+          <div><h2>Good to see you 👋</h2><p>Here’s what’s happening with your money.</p></div>
+          <button className="primary-button" type="button">＋ Add transaction</button>
+        </section>
+
+        <section className="summary-grid" aria-label="Financial summary">
+          {summaryCards.map((card) => (
+            <article className="summary-card" key={card.label}>
+              <div className="card-top"><span>{card.label}</span><span className="card-icon">{card.icon}</span></div>
+              <strong className="amount">{card.amount}</strong>
+              <span className={`change ${card.tone}`}>{card.change} <span className="muted">vs. last month</span></span>
+            </article>
+          ))}
+        </section>
+
+        <section className="content-grid">
+          <article className="panel spending-panel" id="reports">
+            <div className="panel-heading"><div><h3>Spending overview</h3><p>Your spending activity at a glance</p></div><button className="select-button" type="button">This month⌄</button></div>
+            <div className="chart-placeholder">
+              <div className="chart-total"><span>Total spent</span><strong>₹7,440</strong><small>Monthly sample data</small></div>
+              <div className="bars" aria-label="Illustrative weekly spending chart">
+                {[38, 58, 44, 76, 52, 88, 64, 48, 70, 56, 94, 62].map((height, index) => <span className={index === 10 ? "bar highlight" : "bar"} style={{ height: `${height}%` }} key={index} />)}
+              </div>
+              <div className="chart-labels"><span>Week 1</span><span>Week 2</span><span>Week 3</span><span>Week 4</span></div>
+            </div>
+          </article>
+
+          <article className="panel budget-panel" id="budgets">
+            <div className="panel-heading"><div><h3>Budget snapshot</h3><p>Monthly spending limit</p></div><span className="budget-badge">On track</span></div>
+            <div className="budget-number"><strong>₹7,440</strong><span>of ₹12,000</span></div>
+            <div className="progress-track"><span /></div>
+            <div className="budget-footer"><span>62% used</span><strong>₹4,560 left</strong></div>
+            <div className="budget-tip"><span>✦</span><p>You’re within your monthly budget. Keep it up!</p></div>
+          </article>
+        </section>
+
+        <section className="panel transactions-panel" id="transactions">
+          <div className="panel-heading"><div><h3>Recent transactions</h3><p>Your latest money activity</p></div><button className="text-button" type="button">View all →</button></div>
+          <div className="transaction-list">
+            {transactions.map((transaction) => (
+              <div className="transaction-row" key={transaction.name}>
+                <div className={`transaction-mark ${transaction.color}`}>{transaction.mark}</div>
+                <div className="transaction-description"><strong>{transaction.name}</strong><span>{transaction.category} · {transaction.date}</span></div>
+                <strong className={transaction.amount.startsWith("+") ? "income" : "expense"}>{transaction.amount}</strong>
+              </div>
+            ))}
+          </div>
+          <p className="demo-note">Demo dashboard · Sample figures only. Connect your account to use real data.</p>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+export default App;
