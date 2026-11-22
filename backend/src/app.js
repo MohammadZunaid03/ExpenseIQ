@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import { checkDatabaseConnection } from "./config/database.js";
+import authRouter from "./routes/auth.js";
 
 const app = express();
 
@@ -38,6 +39,8 @@ app.get("/api/health/database", async (_request, response) => {
     });
   }
 });
+
+app.use("/api/auth", authRouter);
 
 app.use((request, response) => {
   response.status(404).json({
