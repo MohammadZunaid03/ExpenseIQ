@@ -1,3 +1,12 @@
+import { useEffect, useState } from "react";
+import AuthScreen from "./AuthScreen.jsx";
+import {
+  clearAccessToken,
+  getCurrentUser,
+  getStoredAccessToken,
+  storeAccessToken,
+} from "./lib/api.js";
+
 const summaryCards = [
   { label: "Total balance", amount: "₹24,560.00", change: "+8.2%", tone: "positive", icon: "↗" },
   { label: "Monthly income", amount: "₹32,000.00", change: "+4.5%", tone: "positive", icon: "↓" },
@@ -11,6 +20,53 @@ const transactions = [
 ];
 
 function App() {
+  const [authStatus, setAuthStatus] = useState("checking");
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    if (!getStoredAccessToken()) {
+      setAuthStatus("signed-out");
+      return;
+    }
+
+    getCurrentUser()
+      .then((result) => {
+        setUser(result.user);
+        setAuthStatus("signed-in");
+      })
+      .catch(() => {
+        clearAccessToken();
+        setAuthStatus("signed-out");
+      });
+  }, []);
+
+  function handleAuthenticated(result) {
+    storeAccessToken(result.accessToken);
+    setUser(result.user);
+    setAuthStatus("signed-in");
+  }
+
+  function handleLogout() {
+    clearAccessToken();
+    setUser(null);
+    setAuthStatus("signed-out");
+  }
+
+  if (authStatus === "checking") {
+    return <div className="auth-loading" role="status">Loading your ExpenseIQ workspace…</div>;
+  }
+
+  if (authStatus === "signed-out") {
+    return <AuthScreen onAuthenticated={handleAuthenticated} />;
+  }
+
+  const firstName = user?.fullName?.split(" ")[0] || "there";
+  const initials = (user?.fullName || "User")
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -33,9 +89,12 @@ function App() {
             <p>Small steps today build stronger financial habits tomorrow.</p>
           </div>
           <div className="profile">
-            <div className="avatar">ZU</div>
-            <div><strong>Your account</strong><small>Personal workspace</small></div>
-            <span className="profile-menu">···</span>
+            <div className="avatar">{initials || "U"}</div>
+            <div className="profile-details">
+              <strong>{user?.fullName || "Your account"}</strong>
+              <small>{user?.email || "Personal workspace"}</small>
+            </div>
+            <button className="profile-logout" type="button" onClick={handleLogout}>Log out</button>
           </div>
         </div>
       </aside>
@@ -43,11 +102,14 @@ function App() {
       <main className="main-content" id="overview">
         <header className="topbar">
           <div><span className="eyebrow">PERSONAL FINANCE</span><h1>Overview</h1></div>
-          <div className="topbar-actions"><span className="date-label">Your financial snapshot</span><button className="icon-button" aria-label="Notifications">♧</button></div>
+          <div className="topbar-actions">
+            <span className="date-label">Your financial snapshot</span>
+            <button className="logout-button" type="button" onClick={handleLogout}>Log out</button>
+          </div>
         </header>
 
         <section className="welcome-row">
-          <div><h2>Good to see you 👋</h2><p>Here’s what’s happening with your money.</p></div>
+          <div><h2>Good to see you, {firstName} 👋</h2><p>Here’s what’s happening with your money.</p></div>
           <button className="primary-button" type="button">＋ Add transaction</button>
         </section>
 
@@ -93,7 +155,7 @@ function App() {
               </div>
             ))}
           </div>
-          <p className="demo-note">Demo dashboard · Sample figures only. Connect your account to use real data.</p>
+          <p className="demo-note">Demo dashboard · Sample figures only. Account data is not connected yet.</p>
         </section>
       </main>
     </div>
