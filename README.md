@@ -2,7 +2,7 @@
 
 **Smart Expense & Budget Manager** — a full-stack personal finance application focused on helping people track income, understand spending, manage budgets, and build healthier financial habits.
 
-> Current status: Day 1 foundation. The dashboard currently uses illustrative sample data. Authentication, transaction persistence, budgets, reports, and other product modules will be added in upcoming milestones.
+> Current status: Day 2 database foundation. The dashboard currently uses illustrative sample data. Authentication, transaction APIs, budgets, reports, and other product modules will be added in upcoming milestones.
 
 ## Technology stack
 
@@ -19,27 +19,24 @@
 
 ```text
 ExpenseIQ/
-├── .github/
-│   └── workflows/
-│       └── ci.yml
+├── .github/workflows/ci.yml
 ├── frontend/
 │   ├── src/
+│   │   ├── lib/api.js
 │   │   ├── App.jsx
 │   │   ├── main.jsx
 │   │   └── styles.css
 │   ├── index.html
-│   ├── package.json
-│   └── vite.config.js
+│   └── package.json
 ├── backend/
+│   ├── db/migrations/001_initial_schema.sql
 │   ├── src/
-│   │   ├── config/
-│   │   │   └── database.js
-│   │   ├── utils/
-│   │   │   └── formatCurrency.js
+│   │   ├── config/database.js
+│   │   ├── db/migrate.js
+│   │   ├── utils/formatCurrency.js
 │   │   ├── app.js
 │   │   └── server.js
-│   ├── tests/
-│   │   └── formatCurrency.test.js
+│   ├── tests/formatCurrency.test.js
 │   ├── .env.example
 │   └── package.json
 └── README.md
@@ -49,7 +46,7 @@ ExpenseIQ/
 
 - Node.js 22 or later
 - npm
-- PostgreSQL 14 or later for database-backed features
+- PostgreSQL 14 or later
 
 ## Run the frontend
 
@@ -59,29 +56,50 @@ npm install
 npm run dev
 ```
 
-Vite starts the frontend at [http://localhost:5173](http://localhost:5173).
+Open [http://localhost:5173](http://localhost:5173).
 
 ## Run the backend
 
-Open another terminal:
+In another terminal:
 
 ```bash
 cd backend
 npm install
 cp .env.example .env
+```
+
+Set `DATABASE_URL` in `backend/.env` to your PostgreSQL connection string, then run:
+
+```bash
+npm run db:migrate
 npm run dev
 ```
 
 The API starts at [http://localhost:5000](http://localhost:5000).
 
-Available foundation endpoints:
+## Database migrations
+
+The first migration creates:
+
+- `users` — account identity and password hash storage
+- `categories` — income and expense categories
+- `transactions` — user income and expense records
+- `budgets` — category or general spending limits over a date range
+- `savings_goals` — target and current savings amounts
+- `schema_migrations` — applied migration history
+
+The migration runner uses a database transaction and records each applied version, so rerunning the command does not apply the same migration twice.
+
+```bash
+npm run db:migrate
+```
+
+## API foundation
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | GET | `/api/health` | Check API availability |
-| GET | `/api/health/database` | Check PostgreSQL configuration and connectivity |
-
-Set `DATABASE_URL` in `backend/.env` to your PostgreSQL connection string. The database health endpoint reports an unconfigured database until this value is supplied.
+| GET | `/api/health/database` | Check PostgreSQL connectivity |
 
 ## Run backend tests
 
@@ -105,7 +123,7 @@ Never commit real credentials or `.env` files.
 
 - Pushes to `main` and `develop` trigger GitHub Actions.
 - Pull requests targeting those branches run the same validation workflow.
-- CI checks available lint, test, and build scripts for the frontend and backend.
+- CI checks available lint, test, and build scripts.
 - Keep commits small, descriptive, and tied to real project progress.
 
 ## Planned milestones
