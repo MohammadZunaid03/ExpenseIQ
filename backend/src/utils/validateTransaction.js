@@ -4,14 +4,13 @@ const AMOUNT_PATTERN = /^(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/;
 
 function isValidDateOnly(value) {
   if (typeof value !== "string" || !DATE_PATTERN.test(value)) return false;
-  const date = new Date(\`\${value}T00:00:00.000Z\`);
+  const date = new Date(value + "T00:00:00.000Z");
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
 export function validateTransaction(input = {}) {
   const errors = {};
   const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
-
   const type = typeof source.type === "string" ? source.type : "";
   if (!VALID_TYPES.has(type)) errors.type = "Choose either income or expense.";
 

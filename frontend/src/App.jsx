@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AuthScreen from "./AuthScreen.jsx";
+import TransactionManager from "./TransactionManager.jsx";
 import {
   clearAccessToken,
   getCurrentUser,
@@ -11,12 +12,6 @@ const summaryCards = [
   { label: "Total balance", amount: "₹24,560.00", change: "+8.2%", tone: "positive", icon: "↗" },
   { label: "Monthly income", amount: "₹32,000.00", change: "+4.5%", tone: "positive", icon: "↓" },
   { label: "Monthly expenses", amount: "₹7,440.00", change: "-2.1%", tone: "positive", icon: "↗" },
-];
-
-const transactions = [
-  { name: "Grocery shopping", category: "Food & groceries", date: "Today, 10:42 AM", amount: "-₹850.00", mark: "G", color: "green" },
-  { name: "Monthly stipend", category: "Income", date: "Yesterday", amount: "+₹8,000.00", mark: "S", color: "blue" },
-  { name: "Metro recharge", category: "Transport", date: "Yesterday", amount: "-₹300.00", mark: "M", color: "orange" },
 ];
 
 function App() {
@@ -110,15 +105,14 @@ function App() {
 
         <section className="welcome-row">
           <div><h2>Good to see you, {firstName} 👋</h2><p>Here’s what’s happening with your money.</p></div>
-          <button className="primary-button" type="button">＋ Add transaction</button>
         </section>
 
-        <section className="summary-grid" aria-label="Financial summary">
+        <section className="summary-grid" aria-label="Illustrative financial summary">
           {summaryCards.map((card) => (
             <article className="summary-card" key={card.label}>
               <div className="card-top"><span>{card.label}</span><span className="card-icon">{card.icon}</span></div>
               <strong className="amount">{card.amount}</strong>
-              <span className={`change ${card.tone}`}>{card.change} <span className="muted">vs. last month</span></span>
+              <span className={"change " + card.tone}>{card.change} <span className="muted">vs. last month</span></span>
             </article>
           ))}
         </section>
@@ -129,7 +123,7 @@ function App() {
             <div className="chart-placeholder">
               <div className="chart-total"><span>Total spent</span><strong>₹7,440</strong><small>Monthly sample data</small></div>
               <div className="bars" aria-label="Illustrative weekly spending chart">
-                {[38, 58, 44, 76, 52, 88, 64, 48, 70, 56, 94, 62].map((height, index) => <span className={index === 10 ? "bar highlight" : "bar"} style={{ height: `${height}%` }} key={index} />)}
+                {[38, 58, 44, 76, 52, 88, 64, 48, 70, 56, 94, 62].map((height, index) => <span className={index === 10 ? "bar highlight" : "bar"} style={{ height: height + "%" }} key={index} />)}
               </div>
               <div className="chart-labels"><span>Week 1</span><span>Week 2</span><span>Week 3</span><span>Week 4</span></div>
             </div>
@@ -144,19 +138,8 @@ function App() {
           </article>
         </section>
 
-        <section className="panel transactions-panel" id="transactions">
-          <div className="panel-heading"><div><h3>Recent transactions</h3><p>Your latest money activity</p></div><button className="text-button" type="button">View all →</button></div>
-          <div className="transaction-list">
-            {transactions.map((transaction) => (
-              <div className="transaction-row" key={transaction.name}>
-                <div className={`transaction-mark ${transaction.color}`}>{transaction.mark}</div>
-                <div className="transaction-description"><strong>{transaction.name}</strong><span>{transaction.category} · {transaction.date}</span></div>
-                <strong className={transaction.amount.startsWith("+") ? "income" : "expense"}>{transaction.amount}</strong>
-              </div>
-            ))}
-          </div>
-          <p className="demo-note">Demo dashboard · Sample figures only. Account data is not connected yet.</p>
-        </section>
+        <TransactionManager />
+        <p className="demo-note">The overview cards, chart and budget snapshot are illustrative sample data. Transactions above are saved to your signed-in account.</p>
       </main>
     </div>
   );

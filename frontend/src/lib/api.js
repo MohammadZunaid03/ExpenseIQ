@@ -17,16 +17,12 @@ async function request(path, options = {}) {
   const headers = new Headers(options.headers || {});
   headers.set("Accept", "application/json");
 
-  if (options.body) {
-    headers.set("Content-Type", "application/json");
-  }
+  if (options.body) headers.set("Content-Type", "application/json");
 
   const token = options.token ?? getStoredAccessToken();
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
+  if (token) headers.set("Authorization", "Bearer " + token);
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(API_BASE_URL + path, {
     ...options,
     headers,
   });
@@ -67,6 +63,37 @@ export function loginUser(credentials) {
 
 export function getCurrentUser() {
   return request("/auth/me");
+}
+
+export function getTransactions(filters = {}) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== null && value !== "") {
+      params.set(key, String(value));
+    }
+  }
+  const query = params.toString();
+  return request("/transactions" + (query ? "?" + query : ""));
+}
+
+export function createTransaction(details) {
+  return request("/transactions", {
+    method: "POST",
+    body: JSON.stringify(details),
+  });
+}
+
+export function updateTransaction(id, details) {
+  return request("/transactions/" + encodeURIComponent(id), {
+    method: "PUT",
+    body: JSON.stringify(details),
+  });
+}
+
+export function deleteTransaction(id) {
+  return request("/transactions/" + encodeURIComponent(id), {
+    method: "DELETE",
+  });
 }
 
 export { API_BASE_URL };

@@ -7,12 +7,13 @@ import {
   validateTransactionFilters,
 } from "../utils/validateTransaction.js";
 
-const TRANSACTION_COLUMNS = \`
-  id, type, amount, title, description, payment_method,
-  transaction_date, created_at, updated_at
-\`;
+const TRANSACTION_COLUMNS = [
+  "id, type, amount, title, description, payment_method,",
+  "transaction_date, created_at, updated_at",
+].join(" ");
 
 function publicTransaction(transaction) {
+  const transactionDate = transaction.transaction_date;
   return {
     id: transaction.id,
     type: transaction.type,
@@ -20,9 +21,9 @@ function publicTransaction(transaction) {
     title: transaction.title,
     description: transaction.description || "",
     paymentMethod: transaction.payment_method || "",
-    transactionDate: typeof transaction.transaction_date === "string"
-      ? transaction.transaction_date.slice(0, 10)
-      : transaction.transaction_date.toISOString().slice(0, 10),
+    transactionDate: typeof transactionDate === "string"
+      ? transactionDate.slice(0, 10)
+      : transactionDate.toISOString().slice(0, 10),
     createdAt: transaction.created_at,
     updatedAt: transaction.updated_at,
   };
@@ -55,29 +56,29 @@ export function createTransactionsRouter({ getPool = getDatabasePool } = {}) {
     const { type, startDate, endDate, search, limit, offset } = validation.filters;
     const values = [request.user.id];
     const conditions = ["user_id = $1"];
-    const addCondition = (sql, value) => {
+    const addCondition = (columnExpression, value) => {
       values.push(value);
-      conditions.push(sql.replace("?", \`$\${values.length}\`));
+      conditions.push(columnExpression + " $" + values.length);
     };
 
-    if (type) addCondition("type = ?", type);
-    if (startDate) addCondition("transaction_date >= ?", startDate);
-    if (endDate) addCondition("transaction_date <= ?", endDate);
+    if (type) addCondition("type =", type);
+    if (startDate) addCondition("transaction_date >=", startDate);
+    if (endDate) addCondition("transaction_date <=", endDate);
     if (search) {
-      values.push(\`%\${search}%\`);
-      const searchPlaceholder = \`$\${values.length}\`;
-      conditions.push(\`(title ILIKE \${searchPlaceholder} OR COALESCE(description, '') ILIKE \${searchPlaceholder})\`);
+      values.push("%" + search + "%");
+      const searchPlaceholder = "$" + values.length;
+      conditions.push("(title ILIKE " + searchPlaceholder + " OR COALESCE(description, '') ILIKE " + searchPlaceholder + ")");
     }
 
     values.push(limit, offset);
-    const result = await pool.query(
-      \`SELECT \${TRANSACTION_COLUMNS}
-       FROM transactions
-       WHERE \${conditions.join(" AND ")}
-       ORDER BY transaction_date DESC, created_at DESC
-       LIMIT $\${values.length - 1} OFFSET $\${values.length}\`,
-      values,
-    );
+    const sql = [
+      "SELECT " + TRANSACTION_COLUMNS,
+      "FROM transactions",
+      "WHERE " + conditions.join(" AND "),
+      "ORDER BY transaction_date DESC, created_at DESC",
+      "LIMIT $" + (values.length - 1) + " OFFSET $" + values.length,
+    ].join("\n");
+    const result = await pool.query(sql, values);
 
     return response.status(200).json({
       success: true,
@@ -101,10 +102,9 @@ export function createTransactionsRouter({ getPool = getDatabasePool } = {}) {
 
     const { type, amount, title, description, paymentMethod, transactionDate } = validation.value;
     const result = await pool.query(
-      \`INSERT INTO transactions
-         (user_id, type, amount, title, description, payment_method, transaction_date)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING \${TRANSACTION_COLUMNS}\`,
+      "INSERT INTO transactions " +
+      "(user_id, type, amount, title, description, payment_method, transaction_date) " +
+      "VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING " + TRANSACTION_COLUMNS,
       [request.user.id, type, amount, title, description || null, paymentMethod || null, transactionDate],
     );
 
@@ -134,11 +134,9 @@ export function createTransactionsRouter({ getPool = getDatabasePool } = {}) {
 
     const { type, amount, title, description, paymentMethod, transactionDate } = validation.value;
     const result = await pool.query(
-      \`UPDATE transactions
-       SET type = $1, amount = $2, title = $3, description = $4,
-           payment_method = $5, transaction_date = $6, updated_at = NOW()
-       WHERE id = $7 AND user_id = $8
-       RETURNING \${TRANSACTION_COLUMNS}\`,
+      "UPDATE transactions SET type = $1, amount = $2, title = $3, description = $4, " +
+      "payment_method = $5, transaction_date = $6, updated_at = NOW() " +
+      "WHERE id = $7 AND user_id = $8 RETURNING " + TRANSACTION_COLUMNS,
       [type, amount, title, description || null, paymentMethod || null, transactionDate, request.params.id, request.user.id],
     );
 

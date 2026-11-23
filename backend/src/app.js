@@ -55,7 +55,7 @@ app.use((error, _request, response, _next) => {
 app.use((request, response) => {
   response.status(404).json({
     success: false,
-    message: \`Route not found: \${request.method} \${request.originalUrl}\`,
+    message: "Route not found: " + request.method + " " + request.originalUrl,
   });
 });
 
