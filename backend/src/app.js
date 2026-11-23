@@ -3,6 +3,7 @@ import express from "express";
 import helmet from "helmet";
 import { checkDatabaseConnection } from "./config/database.js";
 import authRouter from "./routes/auth.js";
+import transactionsRouter from "./routes/transactions.js";
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.get("/api/health/database", async (_request, response) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/transactions", transactionsRouter);
 
 app.use((error, _request, response, _next) => {
   console.error("ExpenseIQ API error:", error);
@@ -53,7 +55,7 @@ app.use((error, _request, response, _next) => {
 app.use((request, response) => {
   response.status(404).json({
     success: false,
-    message: `Route not found: ${request.method} ${request.originalUrl}`,
+    message: \`Route not found: \${request.method} \${request.originalUrl}\`,
   });
 });
 
