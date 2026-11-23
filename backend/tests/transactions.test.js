@@ -85,6 +85,13 @@ function createFakePool(seed = []) {
         records.push(row);
         return { rows: [row], rowCount: 1 };
       }
+      if (sql.includes("DELETE FROM transactions")) {
+        const [id, userId] = params;
+        const index = records.findIndex((record) => record.id === id && record.user_id === userId);
+        if (index < 0) return { rows: [], rowCount: 0 };
+        records.splice(index, 1);
+        return { rows: [{ id }], rowCount: 1 };
+      }
       if (sql.includes("FROM transactions")) {
         return { rows: records.filter((record) => record.user_id === params[0]), rowCount: 1 };
       }
@@ -94,13 +101,6 @@ function createFakePool(seed = []) {
         if (!row) return { rows: [], rowCount: 0 };
         Object.assign(row, { type, amount, title, description, payment_method, transaction_date });
         return { rows: [row], rowCount: 1 };
-      }
-      if (sql.includes("DELETE FROM transactions")) {
-        const [id, userId] = params;
-        const index = records.findIndex((record) => record.id === id && record.user_id === userId);
-        if (index < 0) return { rows: [], rowCount: 0 };
-        records.splice(index, 1);
-        return { rows: [{ id }], rowCount: 1 };
       }
       throw new Error("Unexpected SQL in transaction route test.");
     },
