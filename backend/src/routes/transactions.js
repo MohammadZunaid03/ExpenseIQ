@@ -8,7 +8,7 @@ import {
 } from "../utils/validateTransaction.js";
 
 const TRANSACTION_COLUMNS = [
-  "id, type, amount, title, description, payment_method,",
+  "id, category_id, type, amount, title, description, payment_method,
   "transaction_date, created_at, updated_at",
 ].join(" ");
 
@@ -16,7 +16,7 @@ function publicTransaction(transaction) {
   const transactionDate = transaction.transaction_date;
   return {
     id: transaction.id,
-    type: transaction.type,
+    categoryId: transaction.category_id || null,\n    type: transaction.type,
     amount: String(transaction.amount),
     title: transaction.title,
     description: transaction.description || "",
@@ -29,7 +29,7 @@ function publicTransaction(transaction) {
   };
 }
 
-function databaseUnavailable(response) {
+async function categoryBelongsToUser(pool, categoryId, userId) {\n  if (!categoryId) return true;\n  const result = await pool.query("SELECT id FROM categories WHERE id = $1 AND (user_id = $2 OR user_id IS NULL)", [categoryId, userId]);\n  return result.rowCount > 0;\n}\n\nfunction databaseUnavailable(response) {
   return response.status(503).json({
     success: false,
     message: "Transactions are temporarily unavailable because the database is not configured.",

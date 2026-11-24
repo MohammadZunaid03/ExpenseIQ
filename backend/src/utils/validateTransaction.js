@@ -37,6 +37,11 @@ export function validateTransaction(input = {}) {
     errors.paymentMethod = "Payment method must be 30 characters or fewer.";
   }
 
+  const categoryId = source.categoryId == null || source.categoryId === "" ? null : source.categoryId;
+  if (categoryId !== null && (typeof categoryId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(categoryId))) {
+    errors.categoryId = "Choose a valid category.";
+  }
+
   const transactionDate = source.transactionDate;
   if (!isValidDateOnly(transactionDate)) {
     errors.transactionDate = "Enter a valid transaction date in YYYY-MM-DD format.";

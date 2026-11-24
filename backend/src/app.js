@@ -4,6 +4,8 @@ import helmet from "helmet";
 import { checkDatabaseConnection } from "./config/database.js";
 import authRouter from "./routes/auth.js";
 import transactionsRouter from "./routes/transactions.js";
+import categoriesRouter from "./routes/categories.js";
+import budgetsRouter from "./routes/budgets.js";
 
 const app = express();
 
@@ -43,6 +45,8 @@ app.get("/api/health/database", async (_request, response) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/transactions", transactionsRouter);
+app.use("/api/categories", categoriesRouter);
+app.use("/api/budgets", budgetsRouter);
 
 app.use((error, _request, response, _next) => {
   console.error("ExpenseIQ API error:", error);
