@@ -97,3 +97,22 @@ export function deleteTransaction(id) {
 }
 
 export { API_BASE_URL };
+
+export function getCategories() {
+  return request("/categories");
+}
+export function createCategory(details) {
+  return request("/categories", { method: "POST", body: JSON.stringify(details) });
+}
+export function deleteCategory(id) {
+  return request("/categories/" + encodeURIComponent(id), { method: "DELETE" });
+}
+export function getBudgets() {
+  return request("/budgets");
+}
+export function createBudget(details) {
+  return request("/budgets", { method: "POST", body: JSON.stringify(details) });
+}
+export function deleteBudget(id) {
+  return request("/budgets/" + encodeURIComponent(id), { method: "DELETE" });
+}

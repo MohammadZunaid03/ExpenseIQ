@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   createTransaction,
+  getCategories,
   deleteTransaction,
   getTransactions,
   updateTransaction,
@@ -21,6 +22,7 @@ function emptyForm() {
     transactionDate: new Date().toISOString().slice(0, 10),
     paymentMethod: "",
     description: "",
+    categoryId: "",
   };
 }
 
@@ -34,6 +36,7 @@ function formatDate(value) {
 
 function TransactionManager() {
   const [transactions, setTransactions] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -47,6 +50,10 @@ function TransactionManager() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [refreshVersion, setRefreshVersion] = useState(0);
+
+  useEffect(() => {
+    getCategories().then((result) => setCategories(result.categories || [])).catch(() => setCategories([]));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +97,7 @@ function TransactionManager() {
       transactionDate: transaction.transactionDate,
       paymentMethod: transaction.paymentMethod || "",
       description: transaction.description || "",
+      categoryId: transaction.categoryId || "",
     });
     setFormErrors({});
     setFormError("");
@@ -107,7 +115,7 @@ function TransactionManager() {
 
   function handleFieldChange(event) {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+    setForm((current) => ({ ...current, [name]: value, ...(name === "type" ? { categoryId: "" } : {}) }));
     setFormErrors((current) => ({ ...current, [name]: "" }));
     setFormError("");
   }
@@ -241,6 +249,15 @@ function TransactionManager() {
               {formErrors.title && <small>{formErrors.title}</small>}
             </label>
             <label>
+              <span>Category</span>
+              <select name="categoryId" value={form.categoryId} onChange={handleFieldChange}>
+                <option value="">Uncategorised</option>
+                {categories.filter((category) => category.type === form.type).map((category) => (
+                  <option value={category.id} key={category.id}>{category.name}</option>
+                ))}
+              </select>
+            </label>
+            <label>
               <span>Date *</span>
               <input
                 name="transactionDate"
@@ -311,6 +328,9 @@ function TransactionManager() {
                   <strong>{transaction.title}</strong>
                   <span>
                     {isIncome ? "Income" : "Expense"}
+                    {categories.find((category) => category.id === transaction.categoryId)?.name
+                      ? " · " + categories.find((category) => category.id === transaction.categoryId).name : ""}
+                    {transaction.categoryName ? " · " + transaction.categoryName : ""}
                     {transaction.paymentMethod ? " · " + transaction.paymentMethod : ""}
                     {" · " + formatDate(transaction.transactionDate)}
                   </span>
