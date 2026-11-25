@@ -101,13 +101,13 @@ The API starts at http://localhost:5000.
 The initial migration creates:
 
 - users — account identity and password hash storage
-- categories — income and expense categories (category selection is not part of the current transaction form)
+- categories — default and user-owned income and expense categories\n- transactions — user income and expense records with an optional category assignment
 - transactions — user income and expense records
 - budgets — category or general spending limits over a date range
 - savings_goals — target and current savings amounts
 - schema_migrations — applied migration history
 
-The transactions table stores a positive NUMERIC(12, 2) amount, an income/expense type, title, optional description and payment method, transaction date, and timestamps. Each record belongs to one user through user_id.
+The transactions table stores a positive NUMERIC(12, 2) amount, an income/expense type, an optional category, title, optional description and payment method, transaction date, and timestamps. Each record belongs to one user through user_id.
 
 The migration runner uses a database transaction and records each applied version, so rerunning the command does not apply the same migration twice.
 
