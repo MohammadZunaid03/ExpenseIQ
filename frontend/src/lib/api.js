@@ -113,6 +113,9 @@ export function getBudgets() {
 export function createBudget(details) {
   return request("/budgets", { method: "POST", body: JSON.stringify(details) });
 }
-export function updateBudget(id, details) {\n  return request("/budgets/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(details) });\n}\nexport function deleteBudget(id) {
+export function updateBudget(id, details) {
+  return request("/budgets/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(details) });
+}
+export function deleteBudget(id) {
   return request("/budgets/" + encodeURIComponent(id), { method: "DELETE" });
 }
