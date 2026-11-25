@@ -57,6 +57,7 @@ export function validateTransaction(input = {}) {
       description: typeof description === "string" ? description.trim() : "",
       paymentMethod: typeof paymentMethod === "string" ? paymentMethod.trim() : "",
       transactionDate,
+      categoryId,
     },
   };
 }
