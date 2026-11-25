@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import AuthScreen from "./AuthScreen.jsx";
-import TransactionManager from "./TransactionManager.jsx";
+import TransactionManager from "./TransactionManager.jsx";\nimport BudgetManager from "./BudgetManager.jsx";
 import {
   clearAccessToken,
   getCurrentUser,
@@ -129,17 +129,11 @@ function App() {
             </div>
           </article>
 
-          <article className="panel budget-panel" id="budgets">
-            <div className="panel-heading"><div><h3>Budget snapshot</h3><p>Monthly spending limit</p></div><span className="budget-badge">On track</span></div>
-            <div className="budget-number"><strong>₹7,440</strong><span>of ₹12,000</span></div>
-            <div className="progress-track"><span /></div>
-            <div className="budget-footer"><span>62% used</span><strong>₹4,560 left</strong></div>
-            <div className="budget-tip"><span>✦</span><p>You’re within your monthly budget. Keep it up!</p></div>
-          </article>
+          <BudgetManager />
         </section>
 
         <TransactionManager />
-        <p className="demo-note">The overview cards, chart and budget snapshot are illustrative sample data. Transactions above are saved to your signed-in account.</p>
+        <p className="demo-note">The overview cards and spending chart are illustrative sample data. Transactions and budgets are saved to your signed-in account.</p>
       </main>
     </div>
   );
