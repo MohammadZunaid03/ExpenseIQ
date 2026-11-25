@@ -12,6 +12,7 @@ import {
 const USER_A = "11111111-1111-4111-8111-111111111111";
 const USER_B = "22222222-2222-4222-8222-222222222222";
 const TRANSACTION_ID = "33333333-3333-4333-8333-333333333333";
+const CATEGORY_ID = "55555555-5555-4555-8555-555555555555";
 const VALID_TRANSACTION = {
   type: "expense",
   amount: "125.50",
@@ -24,6 +25,9 @@ const VALID_TRANSACTION = {
 test("transaction validation accepts valid income and expense records", () => {
   assert.equal(validateTransaction(VALID_TRANSACTION).isValid, true);
   assert.equal(validateTransaction({ ...VALID_TRANSACTION, type: "income" }).isValid, true);
+  const categorized = validateTransaction({ ...VALID_TRANSACTION, categoryId: CATEGORY_ID });
+  assert.equal(categorized.isValid, true);
+  assert.equal(categorized.value.categoryId, CATEGORY_ID);
 });
 
 test("transaction validation rejects invalid fields and impossible dates", () => {
@@ -96,10 +100,10 @@ function createFakePool(seed = []) {
         return { rows: records.filter((record) => record.user_id === params[0]), rowCount: 1 };
       }
       if (sql.includes("UPDATE transactions")) {
-        const [type, amount, title, description, payment_method, transaction_date, id, userId] = params;
+        const [category_id, type, amount, title, description, payment_method, transaction_date, id, userId] = params;
         const row = records.find((record) => record.id === id && record.user_id === userId);
         if (!row) return { rows: [], rowCount: 0 };
-        Object.assign(row, { type, amount, title, description, payment_method, transaction_date });
+        Object.assign(row, { category_id, type, amount, title, description, payment_method, transaction_date });
         return { rows: [row], rowCount: 1 };
       }
       throw new Error("Unexpected SQL in transaction route test.");
@@ -151,6 +155,29 @@ test("POST validates payloads and creates a user-owned transaction", async (t) =
   assert.equal(payload.transaction.amount, "125.50");
   assert.equal(payload.transaction.paymentMethod, "UPI");
   assert.equal(pool.lastQuery.params[0], USER_A);
+});
+
+test("POST stores a category only when it belongs to the user and matches transaction type", async (t) => {
+  const pool = createFakePool();
+  const api = await startTestApi(t, pool);
+  const headers = { "Content-Type": "application/json", Authorization: "Bearer " + api.token };
+
+  const valid = await fetch(api.baseUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ ...VALID_TRANSACTION, categoryId: CATEGORY_ID }),
+  });
+  const payload = await valid.json();
+  assert.equal(valid.status, 201);
+  assert.equal(payload.transaction.categoryId, CATEGORY_ID);
+  assert.equal(pool.lastQuery.params[1], CATEGORY_ID);
+
+  const mismatched = await fetch(api.baseUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ ...VALID_TRANSACTION, type: "income", categoryId: CATEGORY_ID }),
+  });
+  assert.equal(mismatched.status, 400);
 });
 
 test("GET applies filters and scopes the query to the authenticated user", async (t) => {
