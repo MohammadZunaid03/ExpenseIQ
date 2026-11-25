@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import AuthScreen from "./AuthScreen.jsx";
-import TransactionManager from "./TransactionManager.jsx";\nimport BudgetManager from "./BudgetManager.jsx";
+import TransactionManager from "./TransactionManager.jsx";
+import BudgetManager from "./BudgetManager.jsx";
 import {
   clearAccessToken,
   getCurrentUser,
