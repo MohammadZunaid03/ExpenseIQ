@@ -8,7 +8,7 @@ import {
 } from "../utils/validateTransaction.js";
 
 const TRANSACTION_COLUMNS = [
-  "id, category_id, type, amount, title, description, payment_method,
+  "id, category_id, type, amount, title, description, payment_method,",
   "transaction_date, created_at, updated_at",
 ].join(" ");
 
@@ -16,7 +16,8 @@ function publicTransaction(transaction) {
   const transactionDate = transaction.transaction_date;
   return {
     id: transaction.id,
-    categoryId: transaction.category_id || null,\n    type: transaction.type,
+    categoryId: transaction.category_id || null,
+    type: transaction.type,
     amount: String(transaction.amount),
     title: transaction.title,
     description: transaction.description || "",
@@ -29,7 +30,16 @@ function publicTransaction(transaction) {
   };
 }
 
-async function categoryBelongsToUser(pool, categoryId, userId) {\n  if (!categoryId) return true;\n  const result = await pool.query("SELECT id FROM categories WHERE id = $1 AND (user_id = $2 OR user_id IS NULL)", [categoryId, userId]);\n  return result.rowCount > 0;\n}\n\nfunction databaseUnavailable(response) {
+async function categoryBelongsToUser(pool, categoryId, userId, type) {
+  if (!categoryId) return true;
+  const result = await pool.query(
+    "SELECT id FROM categories WHERE id = $1 AND type = $2 AND (user_id = $3 OR user_id IS NULL)",
+    [categoryId, type, userId],
+  );
+  return result.rowCount > 0;
+}
+
+function databaseUnavailable(response) {
   return response.status(503).json({
     success: false,
     message: "Transactions are temporarily unavailable because the database is not configured.",
@@ -100,12 +110,19 @@ export function createTransactionsRouter({ getPool = getDatabasePool } = {}) {
     const pool = getPool();
     if (!pool) return databaseUnavailable(response);
 
-    const { type, amount, title, description, paymentMethod, transactionDate } = validation.value;
+    const { type, amount, title, description, paymentMethod, transactionDate, categoryId } = validation.value;
+    if (!(await categoryBelongsToUser(pool, categoryId, request.user.id, type))) {
+      return response.status(400).json({
+        success: false,
+        message: "Choose a category owned by your account or a matching default category.",
+      });
+    }
+
     const result = await pool.query(
       "INSERT INTO transactions " +
-      "(user_id, type, amount, title, description, payment_method, transaction_date) " +
-      "VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING " + TRANSACTION_COLUMNS,
-      [request.user.id, type, amount, title, description || null, paymentMethod || null, transactionDate],
+      "(user_id, category_id, type, amount, title, description, payment_method, transaction_date) " +
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING " + TRANSACTION_COLUMNS,
+      [request.user.id, categoryId, type, amount, title, description || null, paymentMethod || null, transactionDate],
     );
 
     return response.status(201).json({
@@ -132,12 +149,19 @@ export function createTransactionsRouter({ getPool = getDatabasePool } = {}) {
     const pool = getPool();
     if (!pool) return databaseUnavailable(response);
 
-    const { type, amount, title, description, paymentMethod, transactionDate } = validation.value;
+    const { type, amount, title, description, paymentMethod, transactionDate, categoryId } = validation.value;
+    if (!(await categoryBelongsToUser(pool, categoryId, request.user.id, type))) {
+      return response.status(400).json({
+        success: false,
+        message: "Choose a category owned by your account or a matching default category.",
+      });
+    }
+
     const result = await pool.query(
-      "UPDATE transactions SET type = $1, amount = $2, title = $3, description = $4, " +
-      "payment_method = $5, transaction_date = $6, updated_at = NOW() " +
-      "WHERE id = $7 AND user_id = $8 RETURNING " + TRANSACTION_COLUMNS,
-      [type, amount, title, description || null, paymentMethod || null, transactionDate, request.params.id, request.user.id],
+      "UPDATE transactions SET category_id = $1, type = $2, amount = $3, title = $4, description = $5, " +
+      "payment_method = $6, transaction_date = $7, updated_at = NOW() " +
+      "WHERE id = $8 AND user_id = $9 RETURNING " + TRANSACTION_COLUMNS,
+      [categoryId, type, amount, title, description || null, paymentMethod || null, transactionDate, request.params.id, request.user.id],
     );
 
     if (result.rowCount === 0) {
