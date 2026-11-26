@@ -2,7 +2,7 @@
 
 **Smart Expense & Budget Manager** — a full-stack personal finance application focused on helping people track income, understand spending, manage budgets, and build healthier financial habits.
 
-> Current status: The Day 4 income and expense transaction milestone is implemented. Users can register and sign in, then create, view, edit, delete, search and filter their own transactions. The overview cards, spending chart and budget snapshot still use illustrative sample data.
+> Current status: Users can register and sign in, manage their own income and expense transactions, create and manage categories, and create, edit, delete and track live budgets. The overview summary cards and spending chart remain illustrative sample data.
 
 ## Technology stack
 
@@ -28,6 +28,7 @@ ExpenseIQ/
 │   │   │   └── transactionValidation.js
 │   │   ├── AuthScreen.jsx
 │   │   ├── TransactionManager.jsx
+│   │   ├── BudgetManager.jsx
 │   │   ├── App.jsx
 │   │   ├── main.jsx
 │   │   └── styles.css
@@ -42,11 +43,15 @@ ExpenseIQ/
 │   │   ├── middleware/requireAuth.js
 │   │   ├── routes/auth.js
 │   │   ├── routes/transactions.js
+│   │   ├── routes/categories.js
+│   │   ├── routes/budgets.js
 │   │   ├── utils/
 │   │   │   ├── formatCurrency.js
 │   │   │   ├── tokens.js
 │   │   │   ├── validateRegistration.js
-│   │   │   └── validateTransaction.js
+│   │   │   ├── validateTransaction.js
+│   │   │   ├── validateCategory.js
+│   │   │   └── validateBudget.js
 │   │   ├── app.js
 │   │   └── server.js
 │   ├── tests/
@@ -101,8 +106,8 @@ The API starts at http://localhost:5000.
 The initial migration creates:
 
 - users — account identity and password hash storage
-- categories — default and user-owned income and expense categories\n- transactions — user income and expense records with an optional category assignment
-- transactions — user income and expense records
+- categories — default and user-owned income and expense categories
+- transactions — user income and expense records with an optional category assignment
 - budgets — category or general spending limits over a date range
 - savings_goals — target and current savings amounts
 - schema_migrations — applied migration history
@@ -124,6 +129,23 @@ npm run db:migrate
 | GET | /api/auth/me | Return the signed-in user; requires a bearer token |
 | GET | /api/health | Check API availability |
 | GET | /api/health/database | Check PostgreSQL connectivity |
+
+## Categories and budgets API
+
+All category and budget endpoints require the Authorization: Bearer <access-token> header and are scoped to the signed-in user.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | /api/categories | List default and user-owned categories |
+| POST | /api/categories | Create an income or expense category |
+| PUT | /api/categories/:id | Update an owned category |
+| DELETE | /api/categories/:id | Delete an owned category |
+| GET | /api/budgets | List budgets with calculated spending totals |
+| POST | /api/budgets | Create a budget |
+| PUT | /api/budgets/:id | Update an owned budget |
+| DELETE | /api/budgets/:id | Delete an owned budget |
+
+Budgets can apply to all expense categories or one expense category. Each budget stores a name, positive amount limit, start date and end date. The list endpoint calculates spent, remaining amount and percentage used from the signed-in user's expense transactions within the budget date range. A category-specific budget includes only transactions assigned to that category.
 
 ## Transaction API
 
@@ -179,7 +201,7 @@ The signed-in dashboard includes a transaction form and live transaction list co
 - Filter by all transactions, income, or expenses
 - See loading, API error, retry, and empty states
 
-The overview summary cards, spending chart, and budget snapshot remain clearly labelled illustrative sample data. They are not calculated from transactions yet.
+The dashboard also includes live budget management. Users can create, edit and delete budgets, choose an expense category or track all expenses, and see spending, remaining balance and percentage used. The overview summary cards and spending chart are still illustrative sample data; they are not yet calculated from transaction history.
 
 ## Run tests and build
 
@@ -190,7 +212,7 @@ cd backend
 npm test
 ~~~
 
-The transaction route tests use an injected in-memory pool to verify authentication, validation, filtering, and user-scoped create/update/delete behavior. They do not connect to PostgreSQL.
+The transaction and budget route tests use injected in-memory pools to verify authentication, validation, filtering, calculated budget totals, category checks, and user-scoped create/update/delete behavior. They do not connect to PostgreSQL.
 
 Frontend validation tests and production build:
 
@@ -230,7 +252,7 @@ Never commit real credentials or .env files.
 2. PostgreSQL schema and database migrations
 3. User authentication and protected routes
 4. Income and expense transaction management — implemented
-5. Category budgets and spending alerts
+5. Category management and live budget tracking — implemented
 6. Analytics, reports, and savings goals
 7. Receipt scanning and optional AI-powered insights
 8. Integration testing and deployment
