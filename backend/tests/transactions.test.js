@@ -72,11 +72,17 @@ function createFakePool(seed = []) {
     get lastQuery() { return lastQuery; },
     async query(sql, params) {
       lastQuery = { sql, params };
+      if (sql.includes("FROM categories")) {
+        const [categoryId, type, userId] = params;
+        const valid = categoryId === CATEGORY_ID && type === "expense" && userId === USER_A;
+        return { rows: valid ? [{ id: CATEGORY_ID }] : [], rowCount: valid ? 1 : 0 };
+      }
       if (sql.includes("INSERT INTO transactions")) {
-        const [user_id, type, amount, title, description, payment_method, transaction_date] = params;
+        const [user_id, category_id, type, amount, title, description, payment_method, transaction_date] = params;
         const row = {
           id: TRANSACTION_ID,
           user_id,
+          category_id,
           type,
           amount,
           title,
