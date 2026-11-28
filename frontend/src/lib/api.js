@@ -119,3 +119,7 @@ export function updateBudget(id, details) {
 export function deleteBudget(id) {
   return request("/budgets/" + encodeURIComponent(id), { method: "DELETE" });
 }
+
+export function getOverview() {
+  return request("/overview");
+}

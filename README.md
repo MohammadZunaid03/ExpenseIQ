@@ -2,7 +2,7 @@
 
 **Smart Expense & Budget Manager** — a full-stack personal finance application focused on helping people track income, understand spending, manage budgets, and build healthier financial habits.
 
-> Current status: Users can register and sign in, manage their own income and expense transactions, create and manage categories, and create, edit, delete and track live budgets. The overview summary cards and spending chart remain illustrative sample data.
+> Current status: Users can register and sign in, manage their own income and expense transactions, create and manage categories, and create, edit, delete and track live budgets. The overview balance and monthly income/expense cards are calculated from the signed-in user's saved transactions. The spending chart remains illustrative sample data.
 
 ## Technology stack
 
@@ -130,6 +130,14 @@ npm run db:migrate
 | GET | /api/health | Check API availability |
 | GET | /api/health/database | Check PostgreSQL connectivity |
 
+## Financial overview API
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | /api/overview | Return the signed-in user's all-time net balance, current-month income and expenses, and percentage changes versus the previous month |
+
+The overview endpoint requires a bearer token and scopes its aggregate query to the authenticated user. Percentage change is returned as null when the previous month has no activity but the current month does, because a percentage increase from zero is undefined.
+
 ## Categories and budgets API
 
 All category and budget endpoints require the Authorization: Bearer <access-token> header and are scoped to the signed-in user.
@@ -201,7 +209,7 @@ The signed-in dashboard includes a transaction form and live transaction list co
 - Filter by all transactions, income, or expenses
 - See loading, API error, retry, and empty states
 
-The dashboard also includes live budget management. Users can create, edit and delete budgets, choose an expense category or track all expenses, and see spending, remaining balance and percentage used. The overview summary cards and spending chart are still illustrative sample data; they are not yet calculated from transaction history.
+The dashboard also includes live budget management. Users can create, edit and delete budgets, choose an expense category or track all expenses, and see spending, remaining balance and percentage used. The overview cards now use the authenticated overview API and reflect the account's saved transaction history. The spending chart remains illustrative sample data until weekly analytics are implemented.
 
 ## Run tests and build
 

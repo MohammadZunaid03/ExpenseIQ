@@ -7,17 +7,27 @@ import {
   getCurrentUser,
   getStoredAccessToken,
   storeAccessToken,
+  getOverview,
 } from "./lib/api.js";
 
-const summaryCards = [
-  { label: "Total balance", amount: "₹24,560.00", change: "+8.2%", tone: "positive", icon: "↗" },
-  { label: "Monthly income", amount: "₹32,000.00", change: "+4.5%", tone: "positive", icon: "↓" },
-  { label: "Monthly expenses", amount: "₹7,440.00", change: "-2.1%", tone: "positive", icon: "↗" },
-];
+const currency = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function formatChange(value) {
+  if (value === null || value === undefined) return "No previous-month data";
+  return (value > 0 ? "+" : "") + value.toFixed(1) + "% vs. last month";
+}
 
 function App() {
   const [authStatus, setAuthStatus] = useState("checking");
   const [user, setUser] = useState(null);
+  const [overview, setOverview] = useState(null);
+  const [overviewLoading, setOverviewLoading] = useState(false);
+  const [overviewError, setOverviewError] = useState("");
 
   useEffect(() => {
     if (!getStoredAccessToken()) {
@@ -36,6 +46,26 @@ function App() {
       });
   }, []);
 
+  useEffect(() => {
+    if (authStatus !== "signed-in") return undefined;
+    let cancelled = false;
+    setOverviewLoading(true);
+    setOverviewError("");
+    getOverview()
+      .then((result) => {
+        if (!cancelled) setOverview(result.overview);
+      })
+      .catch((error) => {
+        if (!cancelled) setOverviewError(error.message || "Could not load your financial summary.");
+      })
+      .finally(() => {
+        if (!cancelled) setOverviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authStatus]);
+
   function handleAuthenticated(result) {
     storeAccessToken(result.accessToken);
     setUser(result.user);
@@ -45,6 +75,8 @@ function App() {
   function handleLogout() {
     clearAccessToken();
     setUser(null);
+    setOverview(null);
+    setOverviewError("");
     setAuthStatus("signed-out");
   }
 
@@ -57,6 +89,29 @@ function App() {
   }
 
   const firstName = user?.fullName?.split(" ")[0] || "there";
+  const summaryCards = [
+    {
+      label: "Total balance",
+      amount: overview ? currency.format(Number(overview.totalBalance)) : "—",
+      change: "Net income minus expenses",
+      tone: "neutral",
+      icon: "↗",
+    },
+    {
+      label: "Monthly income",
+      amount: overview ? currency.format(Number(overview.monthIncome)) : "—",
+      change: formatChange(overview?.incomeChange),
+      tone: overview?.incomeChange < 0 ? "negative" : "positive",
+      icon: "↓",
+    },
+    {
+      label: "Monthly expenses",
+      amount: overview ? currency.format(Number(overview.monthExpenses)) : "—",
+      change: formatChange(overview?.expenseChange),
+      tone: overview?.expenseChange > 0 ? "negative" : "positive",
+      icon: "↗",
+    },
+  ];
   const initials = (user?.fullName || "User")
     .split(/\s+/)
     .slice(0, 2)
@@ -108,12 +163,12 @@ function App() {
           <div><h2>Good to see you, {firstName} 👋</h2><p>Here’s what’s happening with your money.</p></div>
         </section>
 
-        <section className="summary-grid" aria-label="Illustrative financial summary">
+        <section className="summary-grid" aria-label="Your financial summary" aria-busy={overviewLoading}>
           {summaryCards.map((card) => (
             <article className="summary-card" key={card.label}>
               <div className="card-top"><span>{card.label}</span><span className="card-icon">{card.icon}</span></div>
-              <strong className="amount">{card.amount}</strong>
-              <span className={"change " + card.tone}>{card.change} <span className="muted">vs. last month</span></span>
+              <strong className="amount">{overviewLoading ? "Loading…" : card.amount}</strong>
+              <span className={"change " + card.tone}>{overviewError ? "Summary unavailable" : card.change}</span>
             </article>
           ))}
         </section>
@@ -134,7 +189,7 @@ function App() {
         </section>
 
         <TransactionManager />
-        <p className="demo-note">The overview cards and spending chart are illustrative sample data. Transactions and budgets are saved to your signed-in account.</p>
+        <p className="demo-note">{overviewError ? overviewError + " Use the transactions section to review your saved records." : "Balance and monthly totals are calculated from your saved transactions. The spending chart is still illustrative sample data."}</p>
       </main>
     </div>
   );
