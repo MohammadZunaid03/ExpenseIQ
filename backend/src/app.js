@@ -6,6 +6,7 @@ import authRouter from "./routes/auth.js";
 import transactionsRouter from "./routes/transactions.js";
 import categoriesRouter from "./routes/categories.js";
 import budgetsRouter from "./routes/budgets.js";
+import overviewRouter from "./routes/overview.js";
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/budgets", budgetsRouter);
+app.use("/api/overview", overviewRouter);
 
 app.use((error, _request, response, _next) => {
   console.error("ExpenseIQ API error:", error);
